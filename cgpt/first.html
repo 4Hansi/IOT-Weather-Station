@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Weather Monitoring Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      display: flex;
+    }
+    .sidebar {
+      width: 250px;
+      height: 100vh;
+      background-color: #343a40;
+      padding: 20px;
+      color: white;
+    }
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+    }
+    .sidebar a:hover {
+      background-color: #495057;
+    }
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+    iframe {
+      border: none;
+      width: 100%;
+      height: 350px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h4>Weather IoT</h4>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#map">Live Weather Map</a>
+    <a href="#simulation">Simulation</a>
+    <a href="#alerts">Weather Alerts</a>
+    <a href="#settings">Settings</a>
+  </div>
+  <div class="main">
+    <h2 id="dashboard">Live Weather Dashboard</h2>
+    <p>Temperature: <span id="temp">25</span>°C | Humidity: <span id="humidity">60</span>%</p>
+    <canvas id="weatherChart" width="400" height="200"></canvas>
+    <hr />
+
+    <h4 id="map">Local Weather Data (OpenWeatherMap)</h4>
+    <iframe src="https://openweathermap.org/weathermap?basemap=map&cities=true&layer=temperature" title="Live Weather Map"></iframe>
+    <hr />
+
+    <h4 id="simulation">Simulation (Wokwi Embed)</h4>
+    <iframe src="https://wokwi.com/projects/387327092926691329" title="Wokwi Simulation"></iframe>
+    <hr />
+
+    <h4 id="alerts">Smart Weather Alerts</h4>
+    <ul id="alertsList">
+      <li>☀️ All clear. Temperature is within normal range.</li>
+    </ul>
+    <hr />
+
+    <h4 id="settings">System Settings</h4>
+    <p>Update interval: <select id="interval">
+      <option value="5">5s</option>
+      <option value="10" selected>10s</option>
+      <option value="30">30s</option>
+    </select></p>
+  </div>
+
+  <script>
+    const tempSpan = document.getElementById("temp");
+    const humiditySpan = document.getElementById("humidity");
+    const alertsList = document.getElementById("alertsList");
+
+    const tempData = [25, 26, 28, 27, 29];
+    const humidityData = [60, 62, 64, 63, 65];
+
+    const chart = new Chart(document.getElementById("weatherChart"), {
+      type: "line",
+      data: {
+        labels: ["1 PM", "2 PM", "3 PM", "4 PM", "5 PM"],
+        datasets: [
+          {
+            label: "Temperature (°C)",
+            data: tempData,
+            borderColor: "rgba(255, 99, 132, 1)",
+            fill: false
+          },
+          {
+            label: "Humidity (%)",
+            data: humidityData,
+            borderColor: "rgba(54, 162, 235, 1)",
+            fill: false
+          }
+        ]
+      }
+    });
+
+    function updateDummyData() {
+      const newTemp = Math.floor(Math.random() * 6 + 24);
+      const newHumidity = Math.floor(Math.random() * 10 + 55);
+
+      tempSpan.textContent = newTemp;
+      humiditySpan.textContent = newHumidity;
+
+      tempData.push(newTemp);
+      tempData.shift();
+      humidityData.push(newHumidity);
+      humidityData.shift();
+      chart.update();
+
+      alertsList.innerHTML = "";
+      if (newTemp > 30) {
+        alertsList.innerHTML += '<li style="color:red">🔥 Heat Alert: Temperature is high!</li>';
+      }
+      if (newHumidity > 70) {
+        alertsList.innerHTML += '<li style="color:blue">💧 Humidity Alert: High moisture levels!</li>';
+      }
+      if (alertsList.innerHTML === "") {
+        alertsList.innerHTML = '<li>☀️ All clear. Temperature is within normal range.</li>';
+      }
+    }
+
+    setInterval(updateDummyData, 10000); // default 10s update
+  </script>
+</body>
+</html>

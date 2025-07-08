@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Weather Monitoring Dashboard</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      color: #333;
+    }
+    header {
+      background: linear-gradient(to right, #0078D7, #00aaff);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.5em;
+    }
+    header p {
+        margin-top: 5px;
+        font-size: 1.2em;
+    }
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 25px;
+      margin-bottom: 30px;
+      transition: all 0.3s ease-in-out;
+    }
+    .card:hover {
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    /* Flexbox container for side-by-side Live Readings & Live Map */
+    .two-column-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px; /* Space between the cards */
+        margin-bottom: 30px; /* Space below this section */
+    }
+    .two-column-section > .card {
+        flex: 1; /* Allows cards to grow and shrink */
+        min-width: 300px; /* Minimum width before wrapping */
+        margin-bottom: 0; /* Remove individual card bottom margin here as gap handles it */
+    }
+
+    /* Chart specific styles (now in its own full-width card) */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 350px; /* Fixed height for the chart */
+    }
+    #chartCanvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* Styles for the Windy map iframe */
+    .windy-map-iframe {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: 100%;
+        height: 350px; /* Match chart height for consistency */
+        display: block;
+    }
+
+    .remark {
+      font-weight: bold;
+      font-size: 1.3em;
+      color: #0078D7;
+      margin-top: 15px;
+    }
+    .sensor-details {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      font-size: 0.9em;
+      color: #555;
+    }
+    .sensor-details p {
+        margin: 5px 0;
+    }
+
+    /* Data Management button specific style */
+    .data-management-card {
+        text-align: center; /* Center content horizontally */
+    }
+    .data-management-card button {
+        padding: 12px 20px; /* Restore original button size */
+        font-size: 1em; /* Restore original font size */
+        margin: 5px; /* Add some margin between buttons */
+    }
+    /* Weather Insights placeholder styles */
+    .insights-content {
+        margin-top: 10px;
+        font-size: 0.95em;
+        color: #555;
+    }
+    .insights-content ul {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0;
+    }
+    .insights-content ul li {
+        margin-bottom: 5px;
+    }
+    .insights-content .placeholder-note {
+        font-size: 0.8em;
+        color: #888;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+        margin-top: 15px;
+    }
+
+    button {
+      background: #0078D7;
+      color: white;
+      border: none;
+      padding: 12px 20px; /* Default button padding */
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em; /* Default button font size */
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #005fa3;
+    }
+    iframe { /* General iframe styles for Tinkercad/YouTube */
+      width: 100%;
+      height: 400px;
+      border: none;
+      border-radius: 8px;
+    }
+    footer {
+      background-color: #e6e6e6;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.95em;
+    }
+    .icon {
+      margin-right: 8px;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      font-size: 1.5em;
+      color: #0078D7;
+      margin-bottom: 15px;
+    }
+
+    /* Media queries for smaller screens */
+    @media (max-width: 768px) {
+        .two-column-section {
+            flex-direction: column; /* Stack cards vertically on small screens */
+            gap: 20px;
+        }
+        .two-column-section > .card {
+            min-width: unset; /* Remove min-width when stacked */
+        }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><i class="fas fa-cloud-sun"></i> Smart Weather Monitoring System</h1>
+    <p>IoT-Based Environmental Sensing with Real-Time Visualization for Yelahanka, Bangalore</p>
+  </header>
+
+  <main>
+    <div class="two-column-section">
+        <div class="card">
+            <div class="section-title"><i class="fas fa-thermometer-half icon"></i>Live Sensor Readings</div>
+            <p>Temperature: <span id="temp">--</span> °C</p>
+            <p>Humidity: <span id="humidity">--</span> %</p>
+            <p>Air Pressure: <span id="pressure">--</span> hPa</p>
+            <p>Wind Speed: <span id="windspeed">--</span> km/h</p>
+            <p>UV Index: <span id="uvindex">--</span></p>
+            <p class="remark" id="remark">Awaiting data...</p>
+
+            <div class="sensor-details">
+                <p><strong>Sensor Types:</strong> DHT11 (Temp/Humidity), BMP280 (Pressure - simulated), Anemometer (Wind Speed - simulated), UV Sensor (UV Index - simulated)</p>
+                <p><strong>Accuracy:</strong> Temp: ±2°C, Humidity: ±5%, Pressure: ±1hPa (simulated), Wind Speed: ±0.5 km/h (simulated), UV Index: ±1 (simulated)</p>
+                <p><strong>Data Refresh Rate:</strong> Every 5 seconds (simulated)</p>
+                <p><em>Note: Values are randomly generated for testing purposes, reflecting typical Bangalore conditions. Real-time data would require external API integration.</em></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title"><i class="fas fa-globe-americas icon"></i>Live Weather Map (Bangalore)</div>
+            <iframe class="windy-map-iframe" src="https://embed.windy.com/embed.html?lat=13.0979&lon=77.5954&zoom=10&level=surface&overlay=wind&product=ecmwf&menu=&message=true&radar=false&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km/h&metricTemp=%C2%B0C&radarProduct=base&forecastMode=data" frameborder="0"></iframe>
+        </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fas fa-chart-line icon"></i>Graphical Visualization</div>
+      <div class="chart-container">
+          <canvas id="chartCanvas"></canvas>
+      </div>
+    </div>
+    <div class="card data-management-card">
+      <div class="section-title"><i class="fas fa-database icon"></i>Data Management</div>
+      <p>Download your historical sensor data for analysis or manage data retention.</p>
+      <button onclick="exportCSV()"><i class="fas fa-file-csv icon"></i>Export Data to CSV</button>
+      <button onclick="clearData()"><i class="fas fa-trash-alt icon"></i>Clear All Data</button>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fas fa-newspaper icon"></i>Weather Insights & News</div>
+      <div class="insights-content">
+          <p>Here are some insights and news relevant to Yelahanka, Bangalore:</p>
+          <ul>
+              <li><strong>Current Headlines:</strong> Light rain expected in isolated parts of Bangalore over the next 24 hours.</li>
+              <li><strong>Forecast Summaries:</strong> Moderate temperatures (25-28°C) with partly cloudy skies are predicted for the coming week. Humidity will remain high.</li>
+              <li><strong>Environmental Alerts:</strong> Air quality in Yelahanka is currently 'Moderate'. Individuals with respiratory sensitivities should take precautions during peak traffic hours.</li>
+              <li><strong>Local Weather Impact:</strong> Afternoon showers could lead to minor traffic delays. Stay updated on local alerts.</li>
+          </ul>
+          <p class="placeholder-note">
+              <em>Note: This section uses placeholder data. Live integration of news and specific insights from third-party weather services (like Google Weather, AccuWeather) requires their respective APIs and adherence to their terms of use, which often involve authentication, usage limits, or paid subscriptions.</em>
+          </p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fas fa-microchip icon"></i>Embedded Circuit Simulation</div>
+      <p>Below is a 3D simulation of the circuit created using Wokwi Online Simulator:</p>
+      <iframe src="https://wokwi.com/projects/435814437197684737"></iframe>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fa-brands fa-youtube"></i></i>&nbspReferred Youtube Video</div>
+      <p>Below is the video that demonstrates the project</p>
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/_GohoygyCNE?si=sMvcI08y-eqvRcto" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></iframe>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-info-circle icon"></i>Project Description</div>
+      <p>This advanced IoT-based weather monitoring system uses an ESP8266/ESP32 microcontroller, DHT11 sensor, and an internal web server to stream real-time environmental data to a browser dashboard. The system updates live charts, provides intelligent weather remarks, and allows CSV data export. This makes it suitable for smart agriculture, environmental research, and educational purposes.</p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 Smart Weather IoT Dashboard. Built with ❤️ using ESP8266, DHT11, and HTML5.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const tempEl = document.getElementById('temp');
+    const humidityEl = document.getElementById('humidity');
+    const pressureEl = document.getElementById('pressure');
+    const windSpeedEl = document.getElementById('windspeed');
+    const uvIndexEl = document.getElementById('uvindex');
+    const remarkEl = document.getElementById('remark');
+
+    let chart;
+    let dataPoints = [];
+
+    // Variables to hold current random sensor values, initialized with typical Bangalore values for July
+    let currentTemp = 25.0; // July average around 23-26°C
+    let currentHumidity = 75.0; // July average high humidity
+    let currentPressure = 1010.0; // Typical atmospheric pressure for Bangalore
+    let currentWindSpeed = 8.0; // Moderate wind speed
+    let currentUVIndex = 5.0; // Moderate UV Index during cloudy periods
+
+    async function fetchData() {
+      try {
+        // Simulate slight fluctuations for all parameters, with smaller steps for realism
+        currentTemp = Math.max(20.0, Math.min(30.0, currentTemp + (Math.random() * 0.4 - 0.2))); // +/- 0.2
+        const t = currentTemp.toFixed(1);
+
+        currentHumidity = Math.max(60.0, Math.min(95.0, currentHumidity + (Math.random() * 1.0 - 0.5))); // +/- 0.5
+        const h = currentHumidity.toFixed(1);
+
+        currentPressure = Math.max(1000.0, Math.min(1020.0, currentPressure + (Math.random() * 0.5 - 0.25))); // +/- 0.25
+        const p = currentPressure.toFixed(1);
+
+        currentWindSpeed = Math.max(0.0, Math.min(20.0, currentWindSpeed + (Math.random() * 0.6 - 0.3))); // +/- 0.3
+        const ws = currentWindSpeed.toFixed(1);
+
+        currentUVIndex = Math.max(0.0, Math.min(10.0, currentUVIndex + (Math.random() * 0.2 - 0.1))); // +/- 0.1
+        const uv = currentUVIndex.toFixed(1);
+
+
+        tempEl.textContent = t;
+        humidityEl.textContent = h;
+        pressureEl.textContent = p;
+        windSpeedEl.textContent = ws;
+        uvIndexEl.textContent = uv;
+
+        updateRemark(t, h, ws, uv); // Pass all relevant parameters to update remark
+
+        const now = new Date().toLocaleTimeString();
+        dataPoints.push({ time: now, temp: t, hum: h, pressure: p, windspeed: ws, uvindex: uv });
+        if (dataPoints.length > 20) dataPoints.shift();
+        updateChart();
+      } catch (err) {
+        remarkEl.textContent = 'Error generating data (simulated data should not cause errors)';
+      }
+    }
+
+    function updateRemark(temp, hum, windspeed, uvindex) {
+      temp = parseFloat(temp);
+      hum = parseFloat(hum);
+      windspeed = parseFloat(windspeed);
+      uvindex = parseFloat(uvindex);
+
+      let remark = 'Pleasant Conditions ✅';
+
+      if (temp > 28) remark = 'Warm Conditions ☀️';
+      if (temp > 32) remark = 'Hot Conditions — Stay hydrated! 🔥';
+      if (temp < 20) remark = 'Cooler Conditions 🧣';
+
+      if (hum > 80) remark += ' & High Humidity 💧';
+      else if (hum > 70) remark += ' & Humid Environment';
+
+      if (windspeed > 15) remark += ' | Noticeably Windy 🌬️';
+      else if (windspeed < 3) remark += ' | Calm Winds';
+
+      if (uvindex > 7) remark += ' | High UV Index — Use sunscreen! 🧴';
+      else if (uvindex > 5) remark += ' | Moderate UV Index';
+
+      remarkEl.textContent = remark;
+    }
+
+    function updateChart() {
+      const labels = dataPoints.map(p => p.time);
+      const tempData = dataPoints.map(p => p.temp);
+      const humData = dataPoints.map(p => p.hum);
+      const pressureData = dataPoints.map(p => p.pressure);
+      const windSpeedData = dataPoints.map(p => p.windspeed);
+
+      if (!chart) {
+        const ctx = document.getElementById('chartCanvas').getContext('2d');
+        chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Temperature (°C)', data: tempData, borderColor: '#ff5733', fill: false },
+              { label: 'Humidity (%)', data: humData, borderColor: '#0078D7', fill: false },
+              { label: 'Pressure (hPa)', data: pressureData, borderColor: '#28a745', fill: false }, // No longer hidden
+              { label: 'Wind Speed (km/h)', data: windSpeedData, borderColor: '#ffc107', fill: false } // No longer hidden
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false // Allow chart to scale based on data
+                }
+            }
+          }
+        });
+      } else {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = tempData;
+        chart.data.datasets[1].data = humData;
+        chart.data.datasets[2].data = pressureData;
+        chart.data.datasets[3].data = windSpeedData;
+        chart.update();
+      }
+    }
+
+    function exportCSV() {
+      let csv = 'Time,Temperature(°C),Humidity(%),Pressure(hPa),WindSpeed(km/h),UVIndex\n';
+      dataPoints.forEach(p => {
+        csv += `${p.time},${p.temp},${p.hum},${p.pressure},${p.windspeed},${p.uvindex}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'weather_data.csv';
+      a.click();
+    }
+
+    function clearData() {
+        if (confirm("Are you sure you want to clear all historical data? This action cannot be undone.")) {
+            dataPoints = [];
+            if (chart) {
+                chart.data.labels = [];
+                chart.data.datasets.forEach(dataset => {
+                    dataset.data = [];
+                });
+                chart.update();
+            }
+            alert("All historical data cleared.");
+        }
+    }
+
+    setInterval(fetchData, 5000);
+    fetchData(); // Initial fetch
+  </script>
+</body>
+</html>
